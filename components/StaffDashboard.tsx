@@ -4,8 +4,6 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
   MessageSquare, 
-  Clock, 
-  Plane, 
   User,
   LogOut,
   Mail,
@@ -15,8 +13,6 @@ import {
 import { logout } from '@/lib/auth-actions';
 import { useRouter } from 'next/navigation';
 import Communications from './Communications';
-import Timesheets from './Timesheets';
-import TravelForms from './Travel_Forms';
 
 type User = {
   id: string;
@@ -27,7 +23,7 @@ type User = {
   department: string;
 };
 
-type ActiveView = 'dashboard' | 'communications' | 'timesheets' | 'travel';
+type ActiveView = 'dashboard' | 'communications';
 
 interface StaffDashboardProps {
   user: User;
@@ -61,44 +57,13 @@ export default function StaffDashboard({ user }: StaffDashboardProps) {
         { icon: Mail, label: 'Email' },
         { icon: Bell, label: 'Notifications' }
       ]
-    },
-    {
-      id: 'timesheets' as const,
-      title: 'Timesheets',
-      description: 'Create and submit your timesheets',
-      icon: Clock,
-      color: 'bg-green-500',
-      subItems: [
-        { icon: Clock, label: 'New Timesheet' },
-        { icon: User, label: 'History' }
-      ]
-    },
-    {
-      id: 'travel' as const,
-      title: 'Travel Forms',
-      description: 'Submit travel and per diem requests',
-      icon: Plane,
-      color: 'bg-purple-500',
-      subItems: [
-        { icon: Plane, label: 'New Form' },
-        { icon: User, label: 'My Forms' }
-      ]
     }
   ];
 
   const renderContent = () => {
     switch (activeView) {
       case 'communications':
-        return <Communications user={{
-            id: '',
-            first_name: '',
-            last_name: '',
-            department: ''
-        }} />;
-      case 'timesheets':
-        return <Timesheets user={user} />;
-      case 'travel':
-        return <TravelForms user={user} />;
+        return <Communications user={user} />;
       default:
         return (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

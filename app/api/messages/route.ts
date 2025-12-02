@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import twilio from '@/lib/twilio';
 import resend from '@/lib/resend';
@@ -6,22 +7,10 @@ import { Prisma } from '@prisma/client';
 
 export async function POST(request: Request) {
   try {
-    // Get the most recent valid session for the current user
-    const session = await prisma.session.findFirst({
-      where: {
-        expires: {
-          gt: new Date()
-        }
-      },
-      orderBy: {
-        created: 'desc'  // Get the most recent session
-      },
-      include: {
-        user: true
-      }
-    });
+    // Get the current user session
+    const session = await getServerSession();
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -34,9 +23,8 @@ export async function POST(request: Request) {
       const body = await request.json();
 
       // Create Web API message
-      const webMessage = await prisma.msgApiLog.create({
+      const webMessage = await prisma.msgCnC.create({
         data: {
-          id: crypto.randomUUID(),
           title: body.title,
           content: body.content,
           priority: body.priority,
@@ -189,7 +177,7 @@ export async function GET(request: Request) {
     const type = searchParams.get('type') || 'web';
     const limit = parseInt(searchParams.get('limit') || '50');
     
-    const messages = await prisma.msgApiLog.findMany({
+    const messages = await prisma.msgCnC.findMany({
       where: {
         type,
         isPublished: true,

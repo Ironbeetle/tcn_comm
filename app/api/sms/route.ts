@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
+import { getServerSession } from 'next-auth'
 import prisma from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth-actions'
 import { createSmsLog } from '@/lib/actions'
 
 // Initialize Twilio client
@@ -17,9 +17,9 @@ const client = twilio(accountSid, authToken)
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const user = await getCurrentUser()
-    if (!user) {
+    // Get current user session
+    const session = await getServerSession()
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
         error: failedMessages.length > 0 ? 
           `Failed: ${failedMessages.map(f => `${f.phoneNumber}: ${f.error}`).join('; ')}` : 
           undefined,
-        userId: user.id,
+        userId: session.user.id,
       })
     } catch (dbError) {
       console.error('Failed to log SMS to database:', dbError)
@@ -162,8 +162,8 @@ export async function POST(request: NextRequest) {
 // GET endpoint to retrieve SMS logs
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
+    const session = await getServerSession()
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
 
     const [smsLogs, total] = await Promise.all([
       prisma.smsLog.findMany({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
         orderBy: { created: 'desc' },
         skip,
         take: limit,
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
         },
       }),
       prisma.smsLog.count({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
       }),
     ])
 

@@ -2,10 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback } from 'react';
 import { TCNApiClient, Member, APIResponse } from '@/lib/tcn-api-client';
 
-// Create API client instance
-const apiClient = new TCNApiClient(
-  process.env.NEXT_PUBLIC_TCN_API_KEY || 'test-api-key-12345'
-);
+// Create API client instance - uses NEXT_PUBLIC env vars for client-side
+const apiClient = new TCNApiClient();
 
 // Original hooks for specific queries
 export function useMembers(params?: {
@@ -135,12 +133,22 @@ export function useSearchMembers(searchTerm: string, debounceMs: number = 300) {
   });
 }
 
-// Hook for getting communities (for filtering)
-export function useCommunities() {
+// Hook for getting all emails (for bulk email campaigns)
+export function useAllEmails(limit: number = 500) {
   return useQuery({
-    queryKey: ['tcn-communities'],
-    queryFn: () => apiClient.getCommunities(),
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 20 * 60 * 1000, // 20 minutes
+    queryKey: ['tcn-all-emails', limit],
+    queryFn: () => apiClient.getAllEmails(limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// Hook for getting all phone numbers (for bulk SMS campaigns)
+export function useAllPhoneNumbers(limit: number = 500) {
+  return useQuery({
+    queryKey: ['tcn-all-phones', limit],
+    queryFn: () => apiClient.getAllPhoneNumbers(limit),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }

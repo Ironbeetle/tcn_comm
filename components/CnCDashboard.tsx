@@ -6,21 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { 
   BarChart3, 
   MessageSquare, 
-  Clock, 
   User,
   LogOut,
   TrendingUp,
   Users,
   FileText,
-  Calendar,
-  DollarSign,
-  PieChart,
-  Activity
+  PieChart
 } from 'lucide-react';
 import { logout } from '@/lib/auth-actions';
 import { useRouter } from 'next/navigation';
 import Communications from '@/components/Communications';
-import Timesheets from '@/components/Timesheets';
 
 type User = {
   id: string;
@@ -31,7 +26,7 @@ type User = {
   department: string;
 };
 
-type ActiveView = 'dashboard' | 'reports' | 'communications' | 'timesheets';
+type ActiveView = 'dashboard' | 'reports' | 'communications';
 
 interface CnCDashboardProps {
   user: User;
@@ -63,7 +58,7 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
       subItems: [
         { icon: TrendingUp, label: 'Performance' },
         { icon: PieChart, label: 'Demographics' },
-        { icon: DollarSign, label: 'Financial' }
+        { icon: BarChart3, label: 'Analytics' }
       ]
     },
     {
@@ -76,18 +71,6 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
         { icon: MessageSquare, label: 'Messages' },
         { icon: Users, label: 'Community' },
         { icon: FileText, label: 'Announcements' }
-      ]
-    },
-    {
-      id: 'timesheets' as const,
-      title: 'Timesheets',
-      description: 'Review and approve staff timesheets',
-      icon: Clock,
-      color: 'bg-green-500',
-      subItems: [
-        { icon: Clock, label: 'Pending' },
-        { icon: Calendar, label: 'Schedule' },
-        { icon: Activity, label: 'Reports' }
       ]
     }
   ];
@@ -110,8 +93,6 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
         );
       case 'communications':
         return <Communications user={user} />;
-      case 'timesheets':
-        return <Timesheets user={user} />;
       default:
         return (
           <div className="space-y-6">
@@ -121,18 +102,18 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
                 <div className="flex items-center">
                   <Users className="h-8 w-8 text-blue-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Staff</p>
-                    <p className="text-2xl font-bold text-gray-900">24</p>
+                    <p className="text-sm font-medium text-gray-600">Total Members</p>
+                    <p className="text-2xl font-bold text-gray-900">--</p>
                   </div>
                 </div>
               </Card>
               
               <Card className="p-6">
                 <div className="flex items-center">
-                  <Clock className="h-8 w-8 text-green-600" />
+                  <MessageSquare className="h-8 w-8 text-green-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Pending Timesheets</p>
-                    <p className="text-2xl font-bold text-gray-900">7</p>
+                    <p className="text-sm font-medium text-gray-600">Messages Sent</p>
+                    <p className="text-2xl font-bold text-gray-900">--</p>
                   </div>
                 </div>
               </Card>
@@ -141,18 +122,18 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
                 <div className="flex items-center">
                   <FileText className="h-8 w-8 text-purple-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Travel Forms</p>
-                    <p className="text-2xl font-bold text-gray-900">12</p>
+                    <p className="text-sm font-medium text-gray-600">Bulletins Posted</p>
+                    <p className="text-2xl font-bold text-gray-900">--</p>
                   </div>
                 </div>
               </Card>
               
               <Card className="p-6">
                 <div className="flex items-center">
-                  <DollarSign className="h-8 w-8 text-yellow-600" />
+                  <TrendingUp className="h-8 w-8 text-yellow-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Monthly Budget</p>
-                    <p className="text-2xl font-bold text-gray-900">$45K</p>
+                    <p className="text-sm font-medium text-gray-600">Active Campaigns</p>
+                    <p className="text-2xl font-bold text-gray-900">--</p>
                   </div>
                 </div>
               </Card>
@@ -204,24 +185,24 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
                       <FileText className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">New travel form submitted</p>
-                      <p className="text-xs text-gray-500">John Smith - 2 hours ago</p>
+                      <p className="text-sm font-medium">New bulletin posted</p>
+                      <p className="text-xs text-gray-500">Community Event - 2 hours ago</p>
                     </div>
                   </div>
-                  <Badge variant="outline">Pending</Badge>
+                  <Badge variant="outline">Published</Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
                   <div className="flex items-center space-x-3">
                     <div className="bg-green-100 p-2 rounded-full">
-                      <Clock className="h-4 w-4 text-green-600" />
+                      <MessageSquare className="h-4 w-4 text-green-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Timesheet approved</p>
-                      <p className="text-xs text-gray-500">Mary Johnson - 4 hours ago</p>
+                      <p className="text-sm font-medium">SMS campaign sent</p>
+                      <p className="text-xs text-gray-500">125 recipients - 4 hours ago</p>
                     </div>
                   </div>
-                  <Badge className="bg-green-500">Approved</Badge>
+                  <Badge className="bg-green-500">Delivered</Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
@@ -230,8 +211,8 @@ export default function CnCDashboard({ user }: CnCDashboardProps) {
                       <MessageSquare className="h-4 w-4 text-purple-600" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Community message sent</p>
-                      <p className="text-xs text-gray-500">Sarah Wilson - 1 day ago</p>
+                      <p className="text-sm font-medium">Email notification sent</p>
+                      <p className="text-xs text-gray-500">Meeting reminder - 1 day ago</p>
                     </div>
                   </div>
                   <Badge className="bg-purple-500">Sent</Badge>

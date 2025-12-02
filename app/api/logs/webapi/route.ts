@@ -1,35 +1,27 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
     // Get userId from the session
-    const session = await prisma.session.findFirst({
-      where: {
-        expires: {
-          gt: new Date()
-        }
-      },
-      include: {
-        user: true
-      }
-    });
+    const session = await getServerSession();
 
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const logs = await prisma.msgApiLog.findMany({
+    const logs = await prisma.bulletinApiLog.findMany({
       where: {
         userId: session.user.id // Filter by current user
       },
       select: {
         id: true,
         created: true,
-        type: true,
+        category: true,
         title: true,
-        content: true,
-        priority: true
+        subject: true,
+        poster_url: true
       },
       orderBy: {
         created: "desc",

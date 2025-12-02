@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { getServerSession } from 'next-auth'
 import prisma from '@/lib/prisma'
-import { getCurrentUser } from '@/lib/auth-actions'
 import { createEmailLog } from '@/lib/actions'
 
 // Initialize Resend client
@@ -15,9 +15,9 @@ const resend = new Resend(resendApiKey)
 
 export async function POST(request: NextRequest) {
   try {
-    // Get current user
-    const user = await getCurrentUser()
-    if (!user) {
+    // Get current user session
+    const session = await getServerSession()
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get sender email (you might want to configure this)
-    const fromEmail = process.env.FROM_EMAIL || `${user.first_name.toLowerCase()}.${user.last_name.toLowerCase()}@yourdomain.com`
-    const fromName = `${user.first_name} ${user.last_name} - TCN Band Office`
+    const fromEmail = process.env.FROM_EMAIL || `${session.user.first_name.toLowerCase()}.${session.user.last_name.toLowerCase()}@yourdomain.com`
+    const fromName = `${session.user.first_name} ${session.user.last_name} - TCN Band Office`
 
     // Send emails
     const emailPromises = recipients.map(async (email: string) => {
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
           `Failed: ${failedEmails.map(f => `${f.email}: ${f.error}`).join('; ')}` : 
           undefined,
         attachments: attachmentsData,
-        userId: user.id,
+        userId: session.user.id,
       })
     } catch (dbError) {
       console.error('Failed to log email to database:', dbError)
@@ -245,8 +245,8 @@ export async function POST(request: NextRequest) {
 // GET endpoint to retrieve email logs
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
+    const session = await getServerSession()
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -260,7 +260,7 @@ export async function GET(request: NextRequest) {
 
     const [emailLogs, total] = await Promise.all([
       prisma.emailLog.findMany({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
         orderBy: { created: 'desc' },
         skip,
         take: limit,
@@ -275,7 +275,7 @@ export async function GET(request: NextRequest) {
         },
       }),
       prisma.emailLog.count({
-        where: { userId: user.id },
+        where: { userId: session.user.id },
       }),
     ])
 
