@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Upload, X, CheckCircle, AlertCircle } from "lucide-react"
+import { Loader2, Upload, X, CheckCircle, AlertCircle, Megaphone } from "lucide-react"
 import { toast } from "sonner"
 
 interface BulletinFormData {
@@ -164,118 +163,128 @@ export default function BulletinCreator() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create Bulletin</CardTitle>
-        <CardDescription>Post announcements to the community bulletin board</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="e.g., Community Meeting"
-              required
-              disabled={loading}
-            />
-          </div>
+    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-stone-200 p-6">
+      <div className="mb-6">
+        <h2 className="flex items-center gap-2 text-xl font-bold text-amber-900">
+          <Megaphone className="h-5 w-5 text-amber-700" />
+          Create Bulletin
+        </h2>
+        <p className="text-sm text-stone-500 mt-1">Post announcements to the community bulletin board</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Title */}
+        <div className="space-y-2">
+          <Label htmlFor="title" className="text-amber-900 font-medium">Title *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+            placeholder="e.g., Community Meeting"
+            required
+            disabled={loading}
+            className="border-stone-300 focus:border-amber-500 focus:ring-amber-500"
+          />
+        </div>
 
-          {/* Subject */}
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject *</Label>
-            <Textarea
-              id="subject"
-              value={formData.subject}
-              onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-              placeholder="Detailed description of the bulletin..."
-              rows={4}
-              required
-              disabled={loading}
-            />
-          </div>
+        {/* Subject */}
+        <div className="space-y-2">
+          <Label htmlFor="subject" className="text-amber-900 font-medium">Subject *</Label>
+          <Textarea
+            id="subject"
+            value={formData.subject}
+            onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+            placeholder="Detailed description of the bulletin..."
+            rows={4}
+            required
+            disabled={loading}
+            className="border-stone-300 focus:border-amber-500 focus:ring-amber-500"
+          />
+        </div>
 
-          {/* Category */}
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              disabled={loading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Category */}
+        <div className="space-y-2">
+          <Label htmlFor="category" className="text-amber-900 font-medium">Category *</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+            disabled={loading}
+          >
+            <SelectTrigger className="border-stone-300 focus:border-amber-500 focus:ring-amber-500">
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((cat) => (
+                <SelectItem key={cat.value} value={cat.value}>
+                  {cat.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          {/* Poster Upload */}
-          <div className="space-y-2">
-            <Label>Poster Image *</Label>
-            {!previewUrl ? (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="poster-upload"
-                  disabled={loading}
-                />
-                <label htmlFor="poster-upload" className="cursor-pointer">
-                  <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Click to upload poster image
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    PNG, JPG, GIF up to 10MB
-                  </p>
-                </label>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={previewUrl}
-                  alt="Poster preview"
-                  className="w-full h-64 object-cover rounded-lg"
-                />
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={clearFile}
-                  disabled={loading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
+        {/* Poster Upload */}
+        <div className="space-y-2">
+          <Label className="text-amber-900 font-medium">Poster Image *</Label>
+          {!previewUrl ? (
+            <div className="border-2 border-dashed border-amber-300 rounded-xl p-8 text-center hover:border-amber-400 hover:bg-amber-50 transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                id="poster-upload"
+                disabled={loading}
+              />
+              <label htmlFor="poster-upload" className="cursor-pointer">
+                <Upload className="mx-auto h-12 w-12 text-amber-500" />
+                <p className="mt-2 text-sm text-amber-800 font-medium">
+                  Click to upload poster image
+                </p>
+                <p className="text-xs text-stone-500 mt-1">
+                  PNG, JPG, GIF up to 10MB
+                </p>
+              </label>
+            </div>
+          ) : (
+            <div className="relative">
+              <img
+                src={previewUrl}
+                alt="Poster preview"
+                className="w-full h-64 object-cover rounded-xl border border-stone-200"
+              />
+              <Button
+                type="button"
+                size="sm"
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white"
+                onClick={clearFile}
+                disabled={loading}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Publishing...
-              </>
-            ) : (
-              "Publish Bulletin"
-            )}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+        {/* Submit Button */}
+        <Button 
+          type="submit" 
+          className="w-full bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white shadow-md" 
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Publishing...
+            </>
+          ) : (
+            <>
+              <Megaphone className="mr-2 h-4 w-4" />
+              Publish Bulletin
+            </>
+          )}
+        </Button>
+      </form>
+    </div>
   )
 }

@@ -163,32 +163,21 @@ function portalContactToMember(contact: PortalContact): Member {
 }
 
 export class TCNApiClient {
-  private apiKey: string;
-  private baseUrl: string;
+  private useLocalProxy: boolean;
 
-  constructor(apiKey?: string, baseUrl?: string) {
-    // Use portal API key and URL from environment
-    this.apiKey = apiKey || process.env.PORTAL_API_KEY || process.env.NEXT_PUBLIC_PORTAL_API_KEY || '';
-    this.baseUrl = baseUrl || process.env.PORTAL_API_URL || process.env.NEXT_PUBLIC_PORTAL_API_URL || '';
+  constructor() {
+    // Always use the local API proxy to avoid CORS issues
+    // The proxy route at /api/contacts handles the actual portal communication
+    this.useLocalProxy = true;
   }
 
   /**
-   * Test connection to the Portal API
+   * Test connection to the Portal API via local proxy
    */
   async testConnection(): Promise<boolean> {
-    if (!this.baseUrl || !this.apiKey) {
-      console.log('TCN API: No portal URL or API key configured, using mock data');
-      return true; // Return true so app still works with mock data
-    }
-
     try {
-      // Try a minimal query to test connection
-      const response = await fetch(`${this.baseUrl}/contacts?limit=1`, {
-        method: 'GET',
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      // Try a minimal query to test connection via local proxy
+      const response = await fetch('/api/contacts?limit=1');
       return response.ok;
     } catch (error) {
       console.error('Portal API connection test failed:', error);
@@ -198,28 +187,16 @@ export class TCNApiClient {
 
   /**
    * Search members by name or T-number
-   * Uses GET /api/sync/contacts with search parameter
+   * Uses local /api/contacts proxy which calls the portal
    */
   async searchMembers(searchTerm: string, limit: number = 50): Promise<APIResponse<Member[]>> {
-    if (!this.baseUrl || !this.apiKey) {
-      console.log('Using mock data - no portal configured');
-      return this.searchMockMembers(searchTerm);
-    }
-
     try {
       const params = new URLSearchParams({
-        search: searchTerm,
+        query: searchTerm,
         limit: limit.toString(),
-        activated: 'true',
-        fields: 'both', // Get both phone and email
       });
 
-      const response = await fetch(`${this.baseUrl}/contacts?${params}`, {
-        method: 'GET',
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      const response = await fetch(`/api/contacts?${params}`);
 
       if (!response.ok) {
         console.error(`Portal API error: ${response.status}`);
@@ -259,24 +236,12 @@ export class TCNApiClient {
     search?: string;
     include_deceased?: boolean;
   }): Promise<APIResponse<Member[]>> {
-    if (!this.baseUrl || !this.apiKey) {
-      return this.getMockMembers(params);
-    }
-
     try {
       const queryParams = new URLSearchParams();
       if (params?.limit) queryParams.set('limit', params.limit.toString());
-      if (params?.community) queryParams.set('community', params.community);
-      if (params?.search) queryParams.set('search', params.search);
-      if (params?.include_deceased) queryParams.set('includeDeceased', 'true');
-      queryParams.set('activated', 'true');
-      queryParams.set('fields', 'both');
+      if (params?.search) queryParams.set('query', params.search);
 
-      const response = await fetch(`${this.baseUrl}/contacts?${queryParams}`, {
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      const response = await fetch(`/api/contacts?${queryParams}`);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -307,23 +272,10 @@ export class TCNApiClient {
 
   /**
    * Get a member by T-number
-   * Uses POST /api/sync/contacts with t_number in body
    */
   async getMemberByTNumber(tNumber: string): Promise<APIResponse<Member | null>> {
-    if (!this.baseUrl || !this.apiKey) {
-      const member = MOCK_MEMBERS.find(m => m.t_number === tNumber);
-      return { success: true, data: member || null, meta: { fallback: 'mock_data' } };
-    }
-
     try {
-      const response = await fetch(`${this.baseUrl}/contacts`, {
-        method: 'POST',
-        headers: {
-          'X-API-Key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ t_number: tNumber }),
-      });
+      const response = await fetch(`/api/contacts?query=${encodeURIComponent(tNumber)}&limit=1`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -351,26 +303,13 @@ export class TCNApiClient {
    * Get members by community
    */
   async getMembersByCommunity(community: string): Promise<APIResponse<Member[]>> {
-    if (!this.baseUrl || !this.apiKey) {
-      const members = MOCK_MEMBERS.filter(
-        m => m.community?.toLowerCase() === community.toLowerCase()
-      );
-      return { success: true, data: members, meta: { fallback: 'mock_data' } };
-    }
-
     try {
       const params = new URLSearchParams({
-        community: community,
-        activated: 'true',
-        fields: 'both',
+        query: community,
         limit: '500',
       });
 
-      const response = await fetch(`${this.baseUrl}/contacts?${params}`, {
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      const response = await fetch(`/api/contacts?${params}`);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -394,26 +333,12 @@ export class TCNApiClient {
    * Get all emails for email campaigns
    */
   async getAllEmails(limit: number = 500): Promise<APIResponse<Member[]>> {
-    if (!this.baseUrl || !this.apiKey) {
-      return { 
-        success: true, 
-        data: MOCK_MEMBERS.filter(m => m.email), 
-        meta: { fallback: 'mock_data' } 
-      };
-    }
-
     try {
       const params = new URLSearchParams({
-        activated: 'true',
-        fields: 'email',
         limit: limit.toString(),
       });
 
-      const response = await fetch(`${this.baseUrl}/contacts?${params}`, {
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      const response = await fetch(`/api/contacts?${params}`);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);
@@ -440,26 +365,12 @@ export class TCNApiClient {
    * Get all phone numbers for SMS campaigns
    */
   async getAllPhoneNumbers(limit: number = 500): Promise<APIResponse<Member[]>> {
-    if (!this.baseUrl || !this.apiKey) {
-      return { 
-        success: true, 
-        data: MOCK_MEMBERS.filter(m => m.phone), 
-        meta: { fallback: 'mock_data' } 
-      };
-    }
-
     try {
       const params = new URLSearchParams({
-        activated: 'true',
-        fields: 'phone',
         limit: limit.toString(),
       });
 
-      const response = await fetch(`${this.baseUrl}/contacts?${params}`, {
-        headers: {
-          'X-API-Key': this.apiKey,
-        },
-      });
+      const response = await fetch(`/api/contacts?${params}`);
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`);

@@ -120,3 +120,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* TCN App Suite Background */
+.genbkg {
+  background-image: url('/regbkg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* TCN Card Styling */
+.tcn-card {
+  @apply bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-stone-200;
+}
+
+/* TCN Header Gradient */
+.tcn-header {
+  @apply bg-gradient-to-r from-amber-700 to-amber-900;
+}
+
+/* TCN Button Primary */
+.tcn-btn-primary {
+  @apply bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white shadow-md;
+}
+
+/* TCN Menu Item Active */
+.tcn-menu-active {
+  @apply bg-gradient-to-r from-amber-700 to-amber-900 text-white shadow-sm;
+}
+
+/* TCN Menu Item Inactive */
+.tcn-menu-inactive {
+  @apply bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200;
+}

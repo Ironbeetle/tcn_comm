@@ -97,12 +97,10 @@ export async function getUser(id: string) {
       include: {
         emails: true,
         staffemail: true,
-        MsgApiLog: true,
+        bulletin: true,
         sessions: true,
         smslog: true,
         msgcnc: true,
-        travel_form: true,
-        time_sheet: true,
       },
     })
     return { success: true, data: user }

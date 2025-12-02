@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth/auth-options'
 import prisma from '@/lib/prisma'
 import { createEmailLog } from '@/lib/actions'
 
@@ -16,10 +17,11 @@ const resend = new Resend(resendApiKey)
 export async function POST(request: NextRequest) {
   try {
     // Get current user session
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
+      console.error('Email API: No session or user ID found')
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Please log in again' },
         { status: 401 }
       )
     }
@@ -104,9 +106,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get sender email (you might want to configure this)
-    const fromEmail = process.env.FROM_EMAIL || `${session.user.first_name.toLowerCase()}.${session.user.last_name.toLowerCase()}@yourdomain.com`
-    const fromName = `${session.user.first_name} ${session.user.last_name} - TCN Band Office`
+    // Get sender email from environment (must be verified in Resend)
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromName = process.env.RESEND_FROM_NAME || 'TCN Messenger'
 
     // Send emails
     const emailPromises = recipients.map(async (email: string) => {

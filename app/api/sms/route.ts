@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth/auth-options'
 import prisma from '@/lib/prisma'
 import { createSmsLog } from '@/lib/actions'
 
@@ -18,10 +19,11 @@ const client = twilio(accountSid, authToken)
 export async function POST(request: NextRequest) {
   try {
     // Get current user session
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
+      console.error('SMS API: No session or user ID found')
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Please log in again' },
         { status: 401 }
       )
     }

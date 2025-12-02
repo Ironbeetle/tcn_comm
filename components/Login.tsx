@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -71,19 +70,26 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <Card className="w-full max-w-md mx-auto p-6 bg-white shadow-lg border border-gray-200">
+    <div className="min-h-screen flex items-center justify-center genbkg px-4">
+      <div className="w-full max-w-md mx-auto p-8 bg-white/95 backdrop-blur-sm shadow-lg rounded-2xl border border-stone-200">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Band Office Login
+          <div className="w-24 h-24 flex items-center justify-center mx-auto mb-4">
+            <img 
+              src="/tcnlogosm.png" 
+              alt="TCN Logo" 
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-amber-900">
+            TCN Communications
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-stone-600 mt-2">
             Sign in to your account
           </p>
         </div>
 
         {error && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
+          <Alert className="mb-4 border-red-200 bg-red-50 rounded-xl">
             <AlertDescription className="text-red-800">
               {error}
             </AlertDescription>
@@ -92,7 +98,7 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-amber-900 font-medium">Email Address</Label>
             <Input
               id="email"
               name="email"
@@ -102,12 +108,12 @@ export default function Login() {
               placeholder="Enter your email"
               required
               disabled={loading}
-              className="w-full"
+              className="w-full border-stone-300 focus:border-amber-500 focus:ring-amber-500"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-amber-900 font-medium">Password</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -118,12 +124,12 @@ export default function Login() {
                 placeholder="Enter your password"
                 required
                 disabled={loading}
-                className="w-full pr-10"
+                className="w-full pr-10 border-stone-300 focus:border-amber-500 focus:ring-amber-500"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-stone-500 hover:text-amber-700"
                 disabled={loading}
               >
                 {showPassword ? (
@@ -137,7 +143,7 @@ export default function Login() {
 
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full bg-gradient-to-r from-amber-700 to-amber-900 hover:from-amber-800 hover:to-amber-950 text-white shadow-md" 
             disabled={loading || !formData.email || !formData.password}
           >
             {loading ? (
@@ -155,18 +161,18 @@ export default function Login() {
           <button
             type="button"
             onClick={handleForgotPassword}
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+            className="text-sm text-amber-700 hover:text-amber-900 hover:underline"
             disabled={loading}
           >
             Forgot your password?
           </button>
         </div>
 
-        <div className="mt-4 text-center text-xs text-gray-500">
+        <div className="mt-4 text-center text-xs text-stone-500">
           <p>Authorized personnel only</p>
           <p>Contact IT support for assistance</p>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
