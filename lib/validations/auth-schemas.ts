@@ -13,7 +13,7 @@ export const registerSchema = z.object({
   confirmPassword: z.string(),
   first_name: z.string().min(1, 'First name is required').max(100),
   last_name: z.string().min(1, 'Last name is required').max(100),
-  department: z.enum(['FRONT_DESK', 'FINANCE', 'HOUSING', 'OFFICE_ADMIN', 'COUNCIL', 'SOCIAL_ASSISTANCE'], {
+  department: z.enum(['BAND_OFFICE', 'J_W_HEALTH_CENTER', 'CSCMEC', 'COUNCIL', 'RECREATION', 'UTILITIES'], {
     message: 'Please select a valid department'
   }),
   role: z.enum(['STAFF', 'STAFF_ADMIN', 'ADMIN', 'CHIEF_COUNCIL']).default('STAFF'),

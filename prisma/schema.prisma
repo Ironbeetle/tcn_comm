@@ -17,7 +17,7 @@ model User {
   last_name     String
   created       DateTime       @default(now())
   updated       DateTime  @default(now()) @updatedAt
-  department    Department     @default(FRONT_DESK)
+  department    Department     @default(BAND_OFFICE)
   role          UserRole       @default(STAFF)
   
   // Authentication fields
@@ -37,6 +37,21 @@ model User {
   sessions      Session[]
   smslog        SmsLog[]
   msgcnc        MsgCnC[]
+  loginLogs     LoginLog[]
+  @@schema("msgmanager")
+}
+
+// Login history log
+model LoginLog {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loginTime   DateTime  @default(now())
+  department  Department
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean   @default(true)
+  failReason  String?
   @@schema("msgmanager")
 }
 
@@ -49,12 +64,12 @@ enum UserRole {
 }
 
 enum Department {
-  FRONT_DESK
-  FINANCE
-  HOUSING
-  OFFICE_ADMIN
+  BAND_OFFICE
+  J_W_HEALTH_CENTER
+  CSCMEC
   COUNCIL
-  SOCIAL_ASSISTANCE
+  RECREATION
+  UTILITIES
   @@schema("msgmanager")
 }
 

@@ -27,16 +27,16 @@ async function createAdmin() {
     const lastName = await question('Last Name: ')
     
     console.log('\nDepartment options:')
-    console.log('1. FRONT_DESK')
-    console.log('2. FINANCE')
-    console.log('3. HOUSING')
-    console.log('4. OFFICE_ADMIN')
-    console.log('5. COUNCIL')
-    console.log('6. SOCIAL_ASSISTANCE')
+    console.log('1. BAND_OFFICE')
+    console.log('2. J_W_HEALTH_CENTER')
+    console.log('3. CSCMEC')
+    console.log('4. COUNCIL')
+    console.log('5. RECREATION')
+    console.log('6. UTILITIES')
     const deptChoice = await question('Choose department (1-6): ')
     
-    const departments = ['FRONT_DESK', 'FINANCE', 'HOUSING', 'OFFICE_ADMIN', 'COUNCIL', 'SOCIAL_ASSISTANCE'] as const
-    const department = departments[parseInt(deptChoice) - 1] || 'FRONT_DESK'
+    const departments = ['BAND_OFFICE', 'J_W_HEALTH_CENTER', 'CSCMEC', 'COUNCIL', 'RECREATION', 'UTILITIES'] as const
+    const department = departments[parseInt(deptChoice) - 1] || 'BAND_OFFICE'
     
     console.log('\nRole options:')
     console.log('1. STAFF')
