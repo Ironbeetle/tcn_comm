@@ -169,3 +169,66 @@ enum Categories{
   ANNOUNCEMENTS
   @@schema("msgmanager")
 }
+
+// ==========================================
+// Sign-Up Forms Feature
+// ==========================================
+
+model SignUpForm {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  deadline    DateTime?
+  maxEntries  Int?
+  isActive    Boolean   @default(true)
+  createdBy   String    // User ID who created the form
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  fields      FormField[]
+  submissions FormSubmission[]
+  @@schema("msgmanager")
+}
+
+model FormField {
+  id          String    @id @default(cuid())
+  formId      String
+  form        SignUpForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  label       String           // Field label e.g. "T-Shirt Size"
+  fieldType   FieldType        // TEXT, SELECT, CHECKBOX, DATE, etc.
+  options     String?          // JSON for select options: ["S","M","L","XL"]
+  placeholder String?          // Placeholder text
+  required    Boolean   @default(false)
+  order       Int              // Display order
+  
+  @@schema("msgmanager")
+}
+
+model FormSubmission {
+  id          String    @id @default(cuid())
+  formId      String
+  form        SignUpForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  memberId    Int?             // Link to Members table if known
+  name        String
+  email       String?
+  phone       String?
+  responses   Json             // {"field_id": "value", ...}
+  submittedAt DateTime  @default(now())
+  
+  @@schema("msgmanager")
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  SELECT
+  MULTISELECT
+  CHECKBOX
+  DATE
+  NUMBER
+  EMAIL
+  PHONE
+  @@schema("msgmanager")
+}

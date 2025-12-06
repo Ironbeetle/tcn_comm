@@ -11,6 +11,9 @@ const adminRoutes = ['/Admin_Home']
 // Routes that require staff admin permissions
 const staffAdminRoutes = ['/StaffAdmin']
 
+// Routes that require at least staff permissions
+const staffRoutes = ['/Staff_Home', '/Staff_Communications', '/Staff_Forms', '/Staff_Events']
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
@@ -58,6 +61,13 @@ export async function middleware(request: NextRequest) {
     // Check staff admin routes
     if (staffAdminRoutes.some(route => pathname.startsWith(route))) {
       if (!['STAFF_ADMIN', 'ADMIN', 'CHIEF_COUNCIL'].includes(token.role as string)) {
+        return NextResponse.redirect(new URL('/unauthorized', request.url))
+      }
+    }
+
+    // Check staff routes (accessible by all authenticated staff and above)
+    if (staffRoutes.some(route => pathname.startsWith(route))) {
+      if (!['STAFF', 'STAFF_ADMIN', 'ADMIN', 'CHIEF_COUNCIL'].includes(token.role as string)) {
         return NextResponse.redirect(new URL('/unauthorized', request.url))
       }
     }

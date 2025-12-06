@@ -1,98 +1,121 @@
 "use client"
 
 import SessionBar from '@/components/SessionBar'
-import BulletinCreator from '@/components/BulletinCreator'
-import EmailComposer from '@/components/EmailComposer'
-import SmsComposer from '@/components/SmsComposer'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Mail, MessageSquare, Megaphone } from "lucide-react"
-import { useState } from "react"
+import { Mail, MessageSquare, ClipboardList, CalendarDays, ChevronRight } from "lucide-react"
+import Link from "next/link"
 
 export default function StaffHomePage() {
-  const [activeTab, setActiveTab] = useState("sms")
-
-  const menuItems = [
-    { id: "sms", label: "SMS", icon: MessageSquare, description: "Send text messages" },
-    { id: "email", label: "Email", icon: Mail, description: "Send emails" },
-    { id: "bulletin", label: "Bulletin", icon: Megaphone, description: "Post bulletins" },
+  const features = [
+    {
+      id: "communications",
+      title: "Communications",
+      description: "Send SMS, emails, and post bulletins to community members",
+      icon: MessageSquare,
+      href: "/Staff_Communications",
+      color: "from-blue-500 to-blue-700",
+      available: true,
+    },
+    {
+      id: "forms",
+      title: "Sign-Up Forms",
+      description: "Create and manage community sign-up forms for events and services",
+      icon: ClipboardList,
+      href: "/Staff_Forms",
+      color: "from-emerald-500 to-emerald-700",
+      available: true,
+    },
+    {
+      id: "events",
+      title: "Event Planner",
+      description: "Organize events, manage registrations, and coordinate prizes",
+      icon: CalendarDays,
+      href: "/Staff_Events",
+      color: "from-purple-500 to-purple-700",
+      available: false,
+    },
   ]
 
   return (
     <div className="min-h-screen genbkg">
       <SessionBar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className='grid grid-cols-1 lg:grid-cols-12 gap-6'>
-          {/* Side Menu */}
-          <div className='lg:col-span-3'>
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-stone-200 p-6">
-              <h2 className="text-lg font-bold text-amber-900 mb-2">Communications</h2>
-              <p className="text-sm text-stone-500 mb-4">Select a channel</p>
-              <div className="space-y-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                        activeTab === item.id
-                          ? 'bg-gradient-to-r from-amber-700 to-amber-900 text-white shadow-md'
-                          : 'bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <div className="text-left">
-                        <div className="font-semibold">{item.label}</div>
-                        <div className={`text-xs ${activeTab === item.id ? 'text-amber-100' : 'text-amber-700'}`}>
-                          {item.description}
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-amber-900 mb-2">Staff Dashboard</h1>
+          <p className="text-stone-600">Select a feature to get started</p>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature) => {
+            const Icon = feature.icon
+            const CardContent = (
+              <div
+                className={`group relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-stone-200 p-6 transition-all duration-300 ${
+                  feature.available
+                    ? 'hover:shadow-lg hover:scale-[1.02] cursor-pointer'
+                    : 'opacity-60 cursor-not-allowed'
+                }`}
+              >
+                {/* Icon */}
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-md`}>
+                  <Icon className="h-7 w-7 text-white" />
+                </div>
+
+                {/* Title */}
+                <h3 className="text-xl font-bold text-amber-900 mb-2 flex items-center">
+                  {feature.title}
+                  {feature.available && (
+                    <ChevronRight className="h-5 w-5 ml-auto text-stone-400 group-hover:text-amber-700 group-hover:translate-x-1 transition-all" />
+                  )}
+                </h3>
+
+                {/* Description */}
+                <p className="text-sm text-stone-600">{feature.description}</p>
+
+                {/* Coming Soon Badge */}
+                {!feature.available && (
+                  <div className="absolute top-4 right-4">
+                    <span className="px-2 py-1 text-xs font-medium bg-stone-100 text-stone-500 rounded-full">
+                      Coming Soon
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            )
 
-          {/* Communication Channel Content */}
-          <div className='lg:col-span-9'>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 bg-white/95 backdrop-blur-sm rounded-xl border border-stone-200 p-1 mb-6">
-                <TabsTrigger 
-                  value="sms" 
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-700 data-[state=active]:to-amber-900 data-[state=active]:text-white rounded-lg"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  SMS
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="email"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-700 data-[state=active]:to-amber-900 data-[state=active]:text-white rounded-lg"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="bulletin"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-700 data-[state=active]:to-amber-900 data-[state=active]:text-white rounded-lg"
-                >
-                  <Megaphone className="h-4 w-4 mr-2" />
-                  Bulletin
-                </TabsTrigger>
-              </TabsList>
+            return feature.available ? (
+              <Link key={feature.id} href={feature.href}>
+                {CardContent}
+              </Link>
+            ) : (
+              <div key={feature.id}>{CardContent}</div>
+            )
+          })}
+        </div>
 
-              <TabsContent value="sms">
-                <SmsComposer />
-              </TabsContent>
-
-              <TabsContent value="email">
-                <EmailComposer />
-              </TabsContent>
-
-              <TabsContent value="bulletin">
-                <BulletinCreator />
-              </TabsContent>
-            </Tabs>
+        {/* Quick Stats or Info Section */}
+        <div className="mt-10 bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-stone-200 p-6">
+          <h3 className="text-lg font-bold text-amber-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Link href="/Staff_Communications">
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200">
+                <Mail className="h-5 w-5 text-amber-700" />
+                <span className="text-sm font-medium text-amber-900">Send Email</span>
+              </div>
+            </Link>
+            <Link href="/Staff_Communications">
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200">
+                <MessageSquare className="h-5 w-5 text-amber-700" />
+                <span className="text-sm font-medium text-amber-900">Send SMS</span>
+              </div>
+            </Link>
+            <Link href="/Staff_Forms">
+              <div className="flex items-center space-x-3 p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200">
+                <ClipboardList className="h-5 w-5 text-amber-700" />
+                <span className="text-sm font-medium text-amber-900">Create Form</span>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
