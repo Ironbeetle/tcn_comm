@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,16 @@ export default function Login() {
   const router = useRouter();
 
   // Role-based redirect mapping
-  const roleRedirects = {
-    STAFF: "/Staff_Home",
-    STAFF_ADMIN: "/Staff_Home", 
-    ADMIN: "/Admin_Home",
-    CHIEF_COUNCIL: "/Admin_Home",
-  } as const;
+  const getRedirectPath = (role: string): string => {
+    switch (role) {
+      case 'ADMIN':
+      case 'STAFF_ADMIN':
+        return '/Admin_Home';
+      case 'STAFF':
+      default:
+        return '/Staff_Home';
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -53,8 +57,11 @@ export default function Login() {
       if (result?.error) {
         setError(result.error || "Invalid credentials. Please try again.");
       } else if (result?.ok) {
-        // Successful login - redirect will be handled by NextAuth callback
-        router.push("/");
+        // Successful login - get session to determine redirect based on role
+        const session = await getSession();
+        const role = session?.user?.role || 'STAFF';
+        const redirectPath = getRedirectPath(role);
+        router.push(redirectPath);
         router.refresh();
       }
     } catch (error) {

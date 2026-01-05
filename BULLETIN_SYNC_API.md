@@ -563,7 +563,120 @@ model bulletin {
 
 ---
 
-## Troubleshooting
+## VPS Portal API Status
+
+> ✅ **Verified (January 2026):** The VPS Portal API endpoints are correctly implemented and match this documentation. If you're experiencing sync issues, the problem is likely on the **Messaging App (client) side**.
+
+### What's Been Verified on VPS:
+- ✅ `POST /api/sync/poster` - Accepts multipart/form-data uploads
+- ✅ `POST /api/sync/bulletin` - Creates/updates bulletins with upsert
+- ✅ `GET /api/sync/bulletin` - Lists bulletins with filters
+- ✅ `DELETE /api/sync/bulletin` - Deletes by sourceId or id
+- ✅ `GET /api/sync/poster` - Checks poster existence
+- ✅ `DELETE /api/sync/poster` - Removes poster files
+- ✅ Categories enum matches between Prisma schema, validation, and docs
+- ✅ All required fields validated correctly
+
+---
+
+## Troubleshooting (Messaging App Side)
+
+### ⚠️ Common Errors to Check in Your Messaging App
+
+#### 1. **sourceId Format Error (400 Bad Request)**
+```json
+{
+  "success": false,
+  "error": "Validation error",
+  "details": [{ "path": ["sourceId"], "message": "Invalid cuid" }]
+}
+```
+**Cause:** The `sourceId` must be a valid **CUID** format (e.g., `clx123abc456def`).  
+**Fix:** Ensure your `BulletinApiLog.id` is generated with `@default(cuid())` in Prisma, not UUID or auto-increment.
+
+#### 2. **Missing Required Fields (400 Bad Request)**
+```json
+{
+  "success": false,
+  "error": "Validation error",
+  "details": [{ "path": ["title"], "message": "Required" }]
+}
+```
+**Cause:** One or more required fields are missing.  
+**Required fields:** `sourceId`, `title`, `subject`, `poster_url`, `category`  
+**Fix:** Ensure all required fields are included in the request body.
+
+#### 3. **Invalid Category (400 Bad Request)**
+```json
+{
+  "success": false,
+  "error": "Validation error", 
+  "details": [{ "path": ["category"], "message": "Invalid enum value" }]
+}
+```
+**Cause:** Category doesn't match the allowed values.  
+**Valid values:** `CHIEFNCOUNCIL`, `HEALTH`, `EDUCATION`, `RECREATION`, `EMPLOYMENT`, `PROGRAM_EVENTS`, `ANNOUNCEMENTS`  
+**Fix:** Use exact uppercase category names.
+
+#### 4. **API Key Error (401 Unauthorized)**
+```json
+{
+  "success": false,
+  "error": "Invalid API key"
+}
+```
+**Checklist:**
+- [ ] `PORTAL_API_KEY` in your `.env` matches `API_KEYS` on VPS portal
+- [ ] Header is exactly `x-api-key` (lowercase)
+- [ ] No extra whitespace or quotes around the key value
+- [ ] Portal was restarted after any API_KEYS change
+
+#### 5. **Wrong API URL (Network Error / 404)**
+```json
+{
+  "success": false,
+  "error": "Network error"
+}
+```
+**Checklist:**
+- [ ] `PORTAL_API_URL` should be `https://your-portal-domain.com/api/sync` (no trailing slash)
+- [ ] URL is reachable from your server (test with `curl`)
+- [ ] Using HTTPS in production
+
+#### 6. **Poster Upload Content-Type Issue**
+**Cause:** Manually setting `Content-Type: multipart/form-data` header.  
+**Fix:** Do NOT set Content-Type header manually when uploading posters. Let the HTTP client set it automatically with the boundary parameter.
+
+#### 7. **Poster Not Uploaded Before Bulletin Sync**
+**Cause:** Trying to sync bulletin before poster upload completes.  
+**Fix:** Always wait for poster upload to complete and use the returned `poster_url` in the bulletin sync request.
+
+### Debug Checklist for Messaging App
+
+```bash
+# 1. Test API key works
+curl -X GET "https://portal.tcn.ca/api/sync/bulletin?limit=1" \
+  -H "x-api-key: YOUR_API_KEY"
+
+# 2. Test poster upload
+curl -X POST "https://portal.tcn.ca/api/sync/poster" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -F "file=@/path/to/test.jpg" \
+  -F "sourceId=cltest123456789" \
+  -F "filename=test.jpg"
+
+# 3. Test bulletin sync  
+curl -X POST "https://portal.tcn.ca/api/sync/bulletin" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sourceId": "cltest123456789",
+    "title": "Test",
+    "subject": "Test subject",
+    "poster_url": "/bulletinboard/cltest123456789.jpg",
+    "category": "ANNOUNCEMENTS"
+  }'
+```
 
 ### Bulletin not appearing on portal?
 1. Check bulletin was synced successfully (check API response)
@@ -576,12 +689,6 @@ model bulletin {
 2. Verify file exists in portal's `/public/bulletinboard/` directory
 3. Check file permissions (should be readable by web server)
 4. Verify image URL is accessible: `https://portal.tcn.ca/bulletinboard/filename.jpg`
-
-### API key not working?
-1. Verify key matches portal's `.env` line 15 (`API_KEYS`)
-2. Check header name is exactly `x-api-key` (lowercase)
-3. Ensure no extra whitespace in key value
-4. Confirm portal app was restarted after changing API_KEYS
 
 ---
 

@@ -14,7 +14,7 @@ const staffAdminRoutes = ['/StaffAdmin']
 // Routes that require at least staff permissions
 const staffRoutes = ['/Staff_Home', '/Staff_Communications', '/Staff_Forms', '/Staff_Events']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Allow API routes and static files

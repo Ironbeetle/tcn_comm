@@ -34,11 +34,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Build full poster URL - the portal needs the complete URL to access the image
-    // poster_url comes in as the portal's path (e.g., /bulletinboard/xxx.jpg)
+    // Portal expects relative path for poster_url (e.g., /bulletinboard/xxx.jpg)
+    // NOT a full URL - the portal stores it as a relative path
+    const portalPosterUrl = poster_url.startsWith('http') 
+      ? poster_url.replace(/https?:\/\/[^\/]+/, '')
+      : poster_url
+
+    // For local storage, we want the full URL
+    const portalBaseUrl = process.env.PORTAL_API_URL?.replace('/api/sync', '') || 'https://tcnaux.ca'
     const fullPosterUrl = poster_url.startsWith('http') 
       ? poster_url 
-      : `http://66.102.140.117${poster_url}`
+      : `${portalBaseUrl}${poster_url}`
 
     // Sync to portal - using snake_case field names as portal expects
     // Note: We don't send userId since that's a local user ID that doesn't exist on the portal
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
       sourceId,
       title,
       subject,
-      poster_url: fullPosterUrl,
+      poster_url: portalPosterUrl,  // Portal expects relative path
       category,
       created: new Date().toISOString(),
     }
@@ -54,13 +60,14 @@ export async function POST(request: NextRequest) {
     console.log('Syncing bulletin to portal:', {
       url: `${portalApiUrl}/bulletin`,
       payload: bulletinPayload,
+      rawPosterUrl: poster_url,
     })
 
     const response = await fetch(`${portalApiUrl}/bulletin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': portalApiKey,
+        'x-api-key': portalApiKey,  // Must be lowercase per portal API spec
       },
       body: JSON.stringify(bulletinPayload),
     })

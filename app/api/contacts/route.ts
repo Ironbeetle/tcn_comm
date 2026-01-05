@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // PORTAL_API_URL already includes /api/sync
-const PORTAL_API_URL = process.env.PORTAL_API_URL || 'http://66.102.140.117/api/sync';
+const PORTAL_API_URL = process.env.PORTAL_API_URL || 'https://tcnaux.ca/api/sync';
 const PORTAL_API_KEY = process.env.PORTAL_API_KEY || '';
 
 export async function GET(request: NextRequest) {

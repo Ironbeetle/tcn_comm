@@ -175,15 +175,17 @@ enum Categories{
 // ==========================================
 
 model SignUpForm {
-  id          String    @id @default(cuid())
-  title       String
-  description String?   @db.Text
-  deadline    DateTime?
-  maxEntries  Int?
-  isActive    Boolean   @default(true)
-  createdBy   String    // User ID who created the form
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  portalFormId String?   @unique // ID of form on TCN Portal (for sync)
+  title        String
+  description  String?   @db.Text
+  deadline     DateTime?
+  maxEntries   Int?
+  isActive     Boolean   @default(true)
+  createdBy    String    // User ID who created the form
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  syncedAt     DateTime? // Last successful sync to portal
   
   fields      FormField[]
   submissions FormSubmission[]
@@ -195,6 +197,7 @@ model FormField {
   formId      String
   form        SignUpForm @relation(fields: [formId], references: [id], onDelete: Cascade)
   
+  fieldId     String?          // Semantic field ID for auto-fill matching (e.g., 'full_name', 'email')
   label       String           // Field label e.g. "T-Shirt Size"
   fieldType   FieldType        // TEXT, SELECT, CHECKBOX, DATE, etc.
   options     String?          // JSON for select options: ["S","M","L","XL"]

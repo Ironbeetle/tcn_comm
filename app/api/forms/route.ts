@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
         createdBy: session.user.id,
         fields: {
           create: fields.map((field: any, index: number) => ({
+            fieldId: field.fieldId || null,  // Semantic ID for auto-fill (e.g., 'full_name', 'email')
             label: field.label,
             fieldType: field.fieldType,
             options: field.options ? JSON.stringify(field.options) : null,
@@ -102,12 +103,22 @@ export async function POST(request: NextRequest) {
     
     if (!syncResult.success) {
       console.warn('Form created but portal sync failed:', syncResult.error)
+    } else if (syncResult.portalFormId) {
+      // Store the portal's form ID for later sync operations
+      await prisma.signUpForm.update({
+        where: { id: form.id },
+        data: { 
+          portalFormId: syncResult.portalFormId,
+          syncedAt: new Date()
+        }
+      })
     }
 
     return NextResponse.json({
       success: true,
       form,
       portalSynced: syncResult.success,
+      portalFormId: syncResult.portalFormId,
       portalError: syncResult.error
     }, { status: 201 })
 

@@ -5,7 +5,7 @@
 
 import { SignUpForm, FormField } from '@prisma/client'
 
-const PORTAL_URL = process.env.TCN_PORTAL_URL || 'http://66.102.140.117'
+const PORTAL_URL = process.env.TCN_PORTAL_URL || 'https://tcnaux.ca'
 const PORTAL_API_KEY = process.env.TCN_PORTAL_API_KEY || ''
 
 type FormWithFields = SignUpForm & { fields: FormField[] }
@@ -40,7 +40,7 @@ export async function syncFormToPortal(
       category: category || 'PROGRAM_EVENTS',
       createdBy: department || 'Band Office',
       fields: form.fields.map(field => ({
-        fieldId: field.id,
+        fieldId: field.fieldId || field.id,  // Use semantic fieldId for auto-fill, fallback to db id
         label: field.label,
         fieldType: field.fieldType,
         required: field.required,
@@ -110,7 +110,7 @@ export async function updateFormOnPortal(
     
     if (updates.fields) {
       payload.fields = updates.fields.map(field => ({
-        fieldId: field.id,
+        fieldId: field.fieldId || field.id,  // Use semantic fieldId for auto-fill, fallback to db id
         label: field.label,
         fieldType: field.fieldType,
         required: field.required,

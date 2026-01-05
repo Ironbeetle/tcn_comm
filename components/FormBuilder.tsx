@@ -34,6 +34,7 @@ type FieldType = 'TEXT' | 'TEXTAREA' | 'SELECT' | 'MULTISELECT' | 'CHECKBOX' | '
 
 interface FormField {
   id: string
+  fieldId: string  // Semantic ID for auto-fill matching (e.g., 'full_name', 'email')
   label: string
   fieldType: FieldType
   options?: string[]
@@ -77,12 +78,18 @@ export default function FormBuilder({ onBack, onSave }: FormBuilderProps) {
   const [fields, setFields] = useState<FormField[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Add default contact fields
+  // Generate a semantic fieldId from a label (for auto-fill compatibility)
+  const generateFieldId = (label: string): string => {
+    return label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+  }
+
+  // Add default contact fields with semantic fieldIds for auto-fill
   const addDefaultFields = () => {
     const defaultFields: FormField[] = [
-      { id: crypto.randomUUID(), label: 'Full Name', fieldType: 'TEXT', required: true, order: 0, placeholder: 'Enter your full name' },
-      { id: crypto.randomUUID(), label: 'Email', fieldType: 'EMAIL', required: true, order: 1, placeholder: 'your.email@example.com' },
-      { id: crypto.randomUUID(), label: 'Phone Number', fieldType: 'PHONE', required: false, order: 2, placeholder: '(555) 123-4567' },
+      { id: crypto.randomUUID(), fieldId: 'first_name', label: 'First Name', fieldType: 'TEXT', required: true, order: 0, placeholder: 'Enter your first name' },
+      { id: crypto.randomUUID(), fieldId: 'last_name', label: 'Last Name', fieldType: 'TEXT', required: true, order: 1, placeholder: 'Enter your last name' },
+      { id: crypto.randomUUID(), fieldId: 'email', label: 'Email', fieldType: 'EMAIL', required: true, order: 2, placeholder: 'your.email@example.com' },
+      { id: crypto.randomUUID(), fieldId: 'phone', label: 'Phone Number', fieldType: 'PHONE', required: false, order: 3, placeholder: '(555) 123-4567' },
     ]
     setFields(defaultFields)
   }
@@ -90,6 +97,7 @@ export default function FormBuilder({ onBack, onSave }: FormBuilderProps) {
   const addField = () => {
     const newField: FormField = {
       id: crypto.randomUUID(),
+      fieldId: '',  // Will be generated from label
       label: '',
       fieldType: 'TEXT',
       required: false,
@@ -99,7 +107,15 @@ export default function FormBuilder({ onBack, onSave }: FormBuilderProps) {
   }
 
   const updateField = (id: string, updates: Partial<FormField>) => {
-    setFields(fields.map(f => f.id === id ? { ...f, ...updates } : f))
+    setFields(fields.map(f => {
+      if (f.id !== id) return f
+      const updatedField = { ...f, ...updates }
+      // Auto-generate fieldId from label for auto-fill compatibility
+      if (updates.label !== undefined) {
+        updatedField.fieldId = generateFieldId(updates.label)
+      }
+      return updatedField
+    }))
   }
 
   const removeField = (id: string) => {
@@ -143,6 +159,7 @@ export default function FormBuilder({ onBack, onSave }: FormBuilderProps) {
           deadline: deadline || null,
           maxEntries: maxEntries || null,
           fields: fields.map(f => ({
+            fieldId: f.fieldId || generateFieldId(f.label),  // Semantic ID for auto-fill
             label: f.label,
             fieldType: f.fieldType,
             options: f.options,

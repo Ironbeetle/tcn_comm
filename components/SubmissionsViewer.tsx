@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -23,17 +24,18 @@ import {
   ArrowLeft, 
   Download, 
   Mail, 
-  MessageSquare, 
   Trash2,
   Loader2,
   Users,
   Search,
-  FileText
+  FileText,
+  RefreshCw
 } from "lucide-react"
 import { toast } from "sonner"
 
 interface Field {
   id: string
+  fieldId: string | null  // Semantic ID for response lookup
   label: string
   fieldType: string
   order: number
@@ -61,9 +63,11 @@ interface SubmissionsViewerProps {
 }
 
 export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerProps) {
+  const router = useRouter()
   const [form, setForm] = useState<FormData | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSubmissions, setSelectedSubmissions] = useState<Set<string>>(new Set())
 
@@ -87,6 +91,31 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
   useEffect(() => {
     fetchSubmissions()
   }, [formId])
+
+  const syncFromPortal = async () => {
+    setIsSyncing(true)
+    try {
+      const response = await fetch(`/api/forms/sync?formId=${formId}`)
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success(data.message)
+        // Refresh submissions list
+        await fetchSubmissions()
+      } else {
+        // Check for specific portal errors
+        if (data.error?.includes('404') || data.error?.includes('Form not found')) {
+          throw new Error('Portal endpoint not configured. See SIGNUP_FORMS_API.md for required portal endpoints.')
+        }
+        throw new Error(data.error || 'Sync failed')
+      }
+    } catch (error) {
+      console.error('Sync error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to sync from portal')
+    } finally {
+      setIsSyncing(false)
+    }
+  }
 
   const deleteSubmission = async (submissionId: string) => {
     if (!confirm('Are you sure you want to delete this submission?')) {
@@ -117,8 +146,13 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
   const exportCSV = () => {
     if (!form || submissions.length === 0) return
 
+    // Get custom fields (non-contact fields)
+    const customFields = form.fields.filter(f => 
+      !['first_name', 'last_name', 'email', 'phone', 'full_name'].includes(f.fieldId || '')
+    )
+
     // Build headers
-    const headers = ['Name', 'Email', 'Phone', 'Member ID', ...form.fields.map(f => f.label), 'Submitted At']
+    const headers = ['Name', 'Email', 'Phone', 'Member ID', ...customFields.map(f => f.label), 'Submitted At']
     
     // Build rows
     const rows = filteredSubmissions.map(sub => [
@@ -126,8 +160,9 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
       sub.email || '',
       sub.phone || '',
       sub.memberId?.toString() || '',
-      ...form.fields.map(f => {
-        const value = sub.responses[f.id]
+      ...customFields.map(f => {
+        // Try fieldId first (portal uses this), then fall back to field.id
+        const value = sub.responses[f.fieldId || ''] ?? sub.responses[f.id]
         if (Array.isArray(value)) return value.join('; ')
         return value?.toString() || ''
       }),
@@ -164,18 +199,11 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
       toast.error('No email addresses in selected submissions')
       return
     }
-    // TODO: Navigate to email composer with pre-filled recipients
-    toast.info(`Would send email to ${contacts.length} recipients`)
-  }
-
-  const sendSmsToSelected = () => {
-    const contacts = getSelectedContacts().filter(c => c.phone)
-    if (contacts.length === 0) {
-      toast.error('No phone numbers in selected submissions')
-      return
-    }
-    // TODO: Navigate to SMS composer with pre-filled recipients
-    toast.info(`Would send SMS to ${contacts.length} recipients`)
+    // Store selected emails in sessionStorage for the email composer
+    const emails = contacts.map(c => c.email).filter(Boolean) as string[]
+    sessionStorage.setItem('emailRecipients', JSON.stringify(emails))
+    sessionStorage.setItem('emailContext', form?.title || 'Form Submission')
+    router.push('/Staff_Communications?tab=email')
   }
 
   const toggleSelectAll = () => {
@@ -256,6 +284,15 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
           <Button
             variant="outline"
             size="sm"
+            onClick={syncFromPortal}
+            disabled={isSyncing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync from Portal'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={exportCSV}
             disabled={submissions.length === 0}
           >
@@ -271,11 +308,7 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
           <Badge className="bg-amber-700">{selectedSubmissions.size} selected</Badge>
           <Button variant="outline" size="sm" onClick={sendEmailToSelected}>
             <Mail className="h-4 w-4 mr-2" />
-            Email
-          </Button>
-          <Button variant="outline" size="sm" onClick={sendSmsToSelected}>
-            <MessageSquare className="h-4 w-4 mr-2" />
-            SMS
+            Email Selected
           </Button>
         </div>
       )}
@@ -317,9 +350,12 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Phone</TableHead>
-                  {form.fields.slice(0, 3).map(field => (
-                    <TableHead key={field.id}>{field.label}</TableHead>
-                  ))}
+                  {/* Show custom fields (skip contact fields based on fieldId) */}
+                  {form.fields
+                    .filter(f => !['first_name', 'last_name', 'email', 'phone', 'full_name'].includes(f.fieldId || ''))
+                    .map(field => (
+                      <TableHead key={field.id}>{field.label}</TableHead>
+                    ))}
                   <TableHead>Submitted</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
@@ -338,16 +374,20 @@ export default function SubmissionsViewer({ formId, onBack }: SubmissionsViewerP
                     <TableCell className="font-medium">{submission.name}</TableCell>
                     <TableCell>{submission.email || '-'}</TableCell>
                     <TableCell>{submission.phone || '-'}</TableCell>
-                    {form.fields.slice(0, 3).map(field => (
-                      <TableCell key={field.id} className="max-w-[150px] truncate">
-                        {(() => {
-                          const value = submission.responses[field.id]
-                          if (Array.isArray(value)) return value.join(', ')
-                          if (typeof value === 'boolean') return value ? 'Yes' : 'No'
-                          return value?.toString() || '-'
-                        })()}
-                      </TableCell>
-                    ))}
+                    {/* Show custom field responses (skip contact fields) */}
+                    {form.fields
+                      .filter(f => !['first_name', 'last_name', 'email', 'phone', 'full_name'].includes(f.fieldId || ''))
+                      .map(field => (
+                        <TableCell key={field.id} className="max-w-[200px] truncate">
+                          {(() => {
+                            // Try fieldId first (portal uses this), then fall back to field.id
+                            const value = submission.responses[field.fieldId || ''] ?? submission.responses[field.id]
+                            if (Array.isArray(value)) return value.join(', ')
+                            if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+                            return value?.toString() || '-'
+                          })()}
+                        </TableCell>
+                      ))}
                     <TableCell className="text-sm text-stone-500">
                       {formatDate(submission.submittedAt)}
                     </TableCell>
